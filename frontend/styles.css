@@ -1,0 +1,99 @@
+/*
+  ============================================================
+  ESTILOS QUE TAILWIND NO CUBRE CÓMODAMENTE
+  ============================================================
+  Tailwind sirve para el 95% (espaciado, colores, layout). Aquí va solo lo
+  "artesanal": pseudo-elementos con degradados, keyframes y arte ASCII.
+*/
+
+/* ---------- Arte ASCII ---------- */
+.ascii {
+  font-family: "Courier New", Consolas, monospace;
+  line-height: 1.1;     /* más compacto, las líneas se "pegan" mejor */
+  white-space: pre;     /* ya es el default de <pre>, pero por si algún CSS global lo pisa */
+  overflow-x: auto;     /* en móvil hace scroll en vez de romper el dibujo */
+}
+
+/* ---------- Efecto CRT ---------- */
+
+/*
+  Scanlines: una capa encima de TODO el sitio con líneas horizontales.
+  repeating-linear-gradient repite: 1px oscuro + 2px transparente.
+  pointer-events: none -> la capa no bloquea clics.
+*/
+.scanlines::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.18) 0px,
+    rgba(0, 0, 0, 0.18) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Viñeta: oscurece los bordes como un monitor curvo. */
+.vignette::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.6) 100%);
+}
+
+/* Brillo de fósforo: el texto "emite" luz de su propio color. */
+.glow {
+  text-shadow: 0 0 6px currentColor;
+}
+
+/* Parpadeo leve de la pantalla del loader. */
+.flicker {
+  animation: flicker 4s infinite steps(1);
+}
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  41%      { opacity: 0.92; }
+  42%      { opacity: 1; }
+  77%      { opacity: 0.95; }
+  78%      { opacity: 1; }
+}
+
+/* Cursor de bloque que parpadea (█). */
+.cursor::after {
+  content: "█";
+  margin-left: 2px;
+  animation: blink 1s infinite steps(1);
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Franjas del panel azul del loader: se deslizan suavemente de lado a lado. */
+.stripe {
+  animation: stripe-slide 3s ease-in-out infinite alternate;
+}
+@keyframes stripe-slide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-12%); }
+}
+
+/* Safari no respeta `list-none` en <summary>: escondemos su triangulito aquí. */
+summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Accesibilidad: si el usuario pidió menos movimiento en su sistema, lo respetamos. */
+@media (prefers-reduced-motion: reduce) {
+  .flicker, .cursor::after, .stripe {
+    animation: none;
+  }
+}
+
+/* Si ya se vio el loader en esta sesión, ni siquiera se dibuja (ver <head> de index.html). */
+.booted #loader {
+  display: none;
+}

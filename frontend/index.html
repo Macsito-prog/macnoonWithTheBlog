@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MAC.LOG</title>
+
+    <!--
+        Si el loader ya se vio en esta sesión, marcamos <html class="booted"> ANTES
+        de que se dibuje la página. styles.css tiene `.booted #loader { display:none }`,
+        así no hay un "parpadeo" del loader al volver al inicio.
+    -->
+    <script>
+        try {
+            if (sessionStorage.getItem('mac-log-booted')) document.documentElement.classList.add('booted');
+        } catch (e) { }
+    </script>
+
+    <!-- Fuentes: VT323 (pixel) e IBM Plex Mono (lectura) desde Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=VT323&display=swap" rel="stylesheet">
+
+    <!-- Tailwind por CDN + nuestra configuración (colores y fuentes con nombre) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/config.js"></script>
+
+    <!-- Efectos CRT y arte ASCII -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<!--
+    data-page="home" -> layout.js lo lee para marcar el link activo de la nav.
+    scanlines        -> clase propia (styles.css): líneas de monitor encima de todo.
+    bg-crt-bg        -> color de fondo definido en js/config.js.
+    font-mono        -> IBM Plex Mono (la redefinimos en config.js).
+    antialiased      -> suaviza las fuentes.
+-->
+<body data-page="home" class="scanlines bg-crt-bg text-cream font-mono antialiased">
+
+    <!-- ============================================================
+         LOADER
+         fixed inset-0   -> ocupa toda la ventana, encima del scroll.
+         z-50            -> por delante del resto del contenido.
+         flex items-center justify-center -> centra la "pantalla" en ambos ejes.
+         transition-opacity duration-500  -> cuando JS agregue `opacity-0`, se desvanece en 0.5 s.
+         ============================================================ -->
+    <div id="loader" role="status" aria-live="polite" aria-label="Cargando el blog"
+        class="vignette fixed inset-0 z-50 flex items-center justify-center p-4 bg-crt-bg transition-opacity duration-500 cursor-pointer">
+
+        <!-- La "pantalla": máximo 36rem de ancho, como la imagen de referencia -->
+        <div class="flicker relative w-full max-w-xl font-pixel">
+
+            <!-- Encabezado con línea roja (como "THANK YOU FOR USING") -->
+            <p class="text-cream text-2xl sm:text-3xl tracking-wider">WELCOME TO</p>
+            <div class="h-1 bg-crt-red mb-3"></div>
+
+            <!-- Panel azul con el arte ASCII y las franjas animadas -->
+            <div class="bg-crt-blue border-4 border-cream/80 overflow-hidden">
+                <pre class="ascii glow text-cream text-[11px] sm:text-sm px-3 pt-4 flex justify-center" role="img"
+                    aria-label="Clave de sol con las letras MAC en el pentagrama">
+----|\------**---**----****-----****-
+----|/------***-***---**--**---**----
+---/|-------**-*-**---******---**----
+--/-|_------**---**---**--**---**----
+-|--|-\-----**---**---**--**----****-
+_|__|_|
+  \_|_/
+</pre>
+                <!-- loader.js rellena esto con 9 filas de franjas -->
+                <div id="loader-stripes" class="flex flex-col gap-[3px] py-4"></div>
+            </div>
+
+            <!-- Fila del medio: ícono + "menú" verde + sello rojo -->
+            <div class="mt-3 flex items-start gap-3">
+                <!-- Cajita azul tipo ícono de teléfono -->
+                <div class="shrink-0 w-14 h-14 bg-crt-blue border-2 border-cream/80 flex flex-col items-center justify-center text-cream leading-none">
+                    <span class="text-2xl">☎</span>
+                    <span class="text-sm">BLOG</span>
+                </div>
+                <!-- flex-1 -> este bloque toma todo el espacio que sobra -->
+                <div class="flex-1 text-phosphor glow text-lg sm:text-xl leading-tight border-b-2 border-phosphor pb-1">
+                    <p class="border-b-2 border-phosphor mb-1">SELECCIONE SECCIÓN:</p>
+                    <p>[HOME],ARCHIVO,ABOUT</p>
+                    <p>TASA: 1 POST/SEMANA</p>
+                </div>
+                <!-- hidden sm:block -> escondido en celulares, visible desde 640px -->
+                <div class="hidden sm:flex flex-col items-end gap-1 text-crt-red text-lg">
+                    <span>2026年チリ製</span>
+                    <span class="bg-crt-red text-crt-bg px-1">MC</span>
+                </div>
+            </div>
+
+            <!-- Caja inferior: texto que se escribe solo + barra de progreso -->
+            <div class="mt-3 border-2 border-phosphor p-3 text-phosphor glow text-lg sm:text-xl leading-tight
+                        flex flex-col sm:flex-row sm:items-end gap-3">
+                <div id="loader-lines" class="flex-1 min-h-[4.5rem] cursor"></div>
+                <div class="sm:w-48">
+                    <p id="loader-status">LLAMANDO...</p>
+                    <!-- La barra: un contenedor con borde y un hijo cuyo ancho cambia JS -->
+                    <div class="h-4 border-2 border-cream/70 p-[2px]">
+                        <div id="loader-bar" class="h-full w-0 bg-crt-sky transition-all duration-200"></div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="mt-2 text-center text-phosphor-dim text-base">[ CLIC O CUALQUIER TECLA PARA SALTAR ]</p>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         LAYOUT PRINCIPAL
+         Mobile-first: sin prefijo = móvil (todo en una columna, uno debajo del otro).
+         lg:grid                -> desde 1024px se vuelve una grilla...
+         lg:grid-cols-[13rem_minmax(0,1fr)_16rem]
+                                -> ...de 3 columnas: nav 13rem | contenido flexible | archivo 16rem.
+                                   Los corchetes [...] son "valores arbitrarios" de Tailwind;
+                                   los guiones bajos _ representan espacios.
+                                   minmax(0,1fr) evita que textos largos desborden la columna.
+         ============================================================ -->
+    <div class="min-h-screen lg:grid lg:grid-cols-[13rem_minmax(0,1fr)_16rem]">
+
+        <!--
+            NAV (la rellena layout.js)
+            border-b-2           -> en móvil: línea abajo (es una barra superior).
+            lg:border-b-0 lg:border-r-2 -> en desktop: línea a la derecha (es una columna).
+            lg:sticky lg:top-0   -> se "pega" arriba al hacer scroll: queda fija mientras el centro se mueve.
+            lg:h-screen          -> mide exactamente el alto de la ventana.
+            lg:self-start        -> en grid los hijos se estiran; esto lo evita para que sticky funcione.
+        -->
+        <header id="site-nav"
+            class="border-b-2 border-phosphor/40 lg:border-b-0 lg:border-r-2 lg:sticky lg:top-0 lg:h-screen lg:self-start">
+        </header>
+
+        <!-- CONTENIDO CENTRAL -->
+        <main class="px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
+            <!-- max-w-2xl mx-auto -> ancho cómodo de lectura (~42rem), centrado -->
+            <div class="max-w-2xl mx-auto">
+
+                <h1 class="font-pixel text-4xl sm:text-5xl text-cream tracking-wide">ÚLTIMAS ENTRADAS</h1>
+                <div class="h-1 bg-crt-red mb-8"></div>
+
+                <!-- home.js pinta aquí las tarjetas. space-y-6 = separación vertical entre hijos -->
+                <section id="post-list" class="space-y-6" aria-live="polite">
+                    <p class="font-pixel text-2xl text-phosphor cursor">CARGANDO</p>
+                </section>
+
+                <footer class="mt-16 pt-4 border-t border-phosphor/30 text-xs text-phosphor-dim">
+                    © 2026 MAC
+                </footer>
+            </div>
+        </main>
+
+        <!--
+            ARCHIVO (lo rellena layout.js)
+            En móvil queda al final (orden natural del HTML) y plegado.
+            lg:overflow-y-auto -> si el archivo crece mucho, scrollea dentro de su columna.
+        -->
+        <aside id="archive" aria-label="Archivo del blog"
+            class="px-4 pb-8 sm:px-8 lg:px-4 lg:py-12 lg:sticky lg:top-0 lg:h-screen lg:self-start lg:overflow-y-auto lg:border-l-2 lg:border-phosphor/40">
+        </aside>
+    </div>
+
+    <!--
+        Scripts al final con `defer`: se descargan en paralelo y se ejecutan en
+        orden cuando el HTML ya está listo. No usamos módulos (type="module")
+        para que el sitio funcione abriendo el archivo con doble clic.
+    -->
+    <script src="js/data.js" defer></script>
+    <script src="js/layout.js" defer></script>
+    <script src="js/loader.js" defer></script>
+    <script src="js/home.js" defer></script>
+</body>
+
+</html>

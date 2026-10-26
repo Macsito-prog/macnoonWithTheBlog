@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>whoAmI · MAC.LOG</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=VT323&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/config.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body data-page="about" class="scanlines bg-crt-bg text-cream font-mono antialiased">
+
+    <!-- Mismo layout de 3 columnas que index.html (ver comentarios allá) -->
+    <div class="min-h-screen lg:grid lg:grid-cols-[13rem_minmax(0,1fr)_16rem]">
+
+        <header id="site-nav"
+            class="border-b-2 border-phosphor/40 lg:border-b-0 lg:border-r-2 lg:sticky lg:top-0 lg:h-screen lg:self-start">
+        </header>
+
+        <main class="px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
+            <div class="max-w-2xl mx-auto">
+
+                <h1 class="font-pixel text-4xl sm:text-5xl text-cream tracking-wide">WHOAMI</h1>
+                <div class="h-1 bg-crt-red mb-8"></div>
+
+                <!-- Una "sesión de terminal" de mentira. Edita los textos a tu gusto. -->
+                <div class="border-2 border-phosphor/40 bg-crt-panel p-5 space-y-4 text-sm sm:text-base">
+                    <div>
+                        <p class="text-phosphor">$ whoami</p>
+                        <p>mac</p>
+                    </div>
+                    <div>
+                        <p class="text-phosphor">$ cat bio.txt</p>
+                        <p class="leading-relaxed text-cream/80">
+                            Fullstack Engineer, wannabe Cloud Engineer.
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-phosphor">$ ls intereses/</p>
+                        <p class="text-cream/80">Cyberpunk/ retro/ music/</p>
+                    </div>
+                    <p class="text-phosphor cursor">$</p>
+                </div>
+
+                <footer class="mt-16 pt-4 border-t border-phosphor/30 text-xs text-phosphor-dim">
+                    © 2026 MAC
+                </footer>
+            </div>
+        </main>
+
+        <aside id="archive" aria-label="Archivo del blog"
+            class="px-4 pb-8 sm:px-8 lg:px-4 lg:py-12 lg:sticky lg:top-0 lg:h-screen lg:self-start lg:overflow-y-auto lg:border-l-2 lg:border-phosphor/40">
+        </aside>
+    </div>
+
+    <script src="js/data.js" defer></script>
+    <script src="js/layout.js" defer></script>
+    <script>
+        // Esta página no necesita un archivo JS propio: solo nav + archivo.
+        // `defer` no aplica a scripts inline, por eso esperamos a DOMContentLoaded.
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderNav();
+            renderArchive(await getPosts());
+        });
+    </script>
+</body>
+
+</html>

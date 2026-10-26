@@ -1,0 +1,63 @@
+# ============================================================
+# CD del FRONT: publica la carpeta frontend/ en GitHub Pages
+# ============================================================
+# GitHub lee todos los .yml de .github/workflows/ y los ejecuta cuando
+# ocurre el evento indicado en `on:`. Cada ejecución corre en una máquina
+# virtual limpia (un "runner") que GitHub presta gratis.
+
+name: Deploy frontend
+
+on:
+  # Se ejecuta con cada push a main...
+  push:
+    branches: [main]
+    # ...pero SOLO si cambió algo del front (o este mismo archivo).
+    # Así, un cambio en backend/ no redespliega el sitio.
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+  # Agrega un botón "Run workflow" en la pestaña Actions para correrlo a mano.
+  workflow_dispatch:
+
+# Permisos mínimos que necesita el token automático del workflow:
+#   pages: write    -> publicar en GitHub Pages
+#   id-token: write -> demostrarle a Pages que el deploy viene de este repo
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si haces dos pushes seguidos, no corren dos deploys a la vez:
+# el nuevo espera a que termine el anterior.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Un "environment" aparece en GitHub con la URL publicada y su historial.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # 1. Descarga el código del repo en el runner.
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # 2. Prepara la configuración de Pages del repositorio.
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      # 3. Empaqueta SOLO la carpeta frontend/ como el sitio a publicar.
+      #    (Nuestro front no necesita "build": son archivos estáticos tal cual.)
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: frontend
+
+      # 4. Publica el paquete. Su `id` permite leer la URL arriba (page_url).
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

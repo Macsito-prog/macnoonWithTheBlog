@@ -1,0 +1,16 @@
+# Configuración local de Claude / editores (no se sube)
+.claude/
+.vscode/
+
+# Secretos: NUNCA se suben. En GitHub se usan "Secrets" del repositorio.
+.env
+.env.*
+
+# Go: binarios compilados
+backend/*.exe
+backend/bin/
+backend/tmp/
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
