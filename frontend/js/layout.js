@@ -44,7 +44,7 @@ function shortDate(iso) {
 const NAV_LINKS = [
   { page: 'home', label: 'home', href: 'index.html' },
   { page: 'about', label: 'me', href: 'about.html' },
-  { page: 'x', label: 'X', href: 'https://x.com//whoismacnoon', external: true },
+  { page: 'x', label: 'X', href: 'https://x.com/LichFrostwolf', external: true },
 ];
 
 /**
